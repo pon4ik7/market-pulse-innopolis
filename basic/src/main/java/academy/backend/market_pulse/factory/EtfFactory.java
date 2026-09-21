@@ -6,14 +6,14 @@ import academy.backend.market_pulse.model.Instrument;
 
 public class EtfFactory implements InstrumentFactory {
 
-    static {
-        InstrumentFactories.register("ETF", new EtfFactory());
+    @Override
+    public String type() {
+        return "ETF";
     }
 
     @Override
     public Instrument create(String ticker, String name, Currency currency) {
-        // TODO: создать Etf(ticker, name, currency, trackingIndex) — trackingIndex через CLI пока
-        // не собирается, использовать значение по умолчанию.
-        throw new UnsupportedOperationException("create для EtfFactory");
+        // trackingIndex не собирается через CLI на этом этапе — значение по умолчанию.
+        return new Etf(ticker, name, currency, "Unspecified");
     }
 }

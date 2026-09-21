@@ -1,15 +1,15 @@
 package academy.backend.market_pulse.demo;
 
-import java.math.BigDecimal;
-import java.nio.file.Path;
-import java.util.List;
-
 import academy.backend.market_pulse.model.Bond;
 import academy.backend.market_pulse.model.Currency;
 import academy.backend.market_pulse.model.Etf;
 import academy.backend.market_pulse.model.Instrument;
 import academy.backend.market_pulse.model.Quote;
 import academy.backend.market_pulse.model.Stock;
+
+import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Каталог нарушений принципов SOLID — по одному примеру на принцип, на домене Market Pulse.
@@ -28,7 +28,16 @@ public final class SolidViolationExamples {
     // ================================================================================
 
     /**
-     * Нарушение SRP:
+     * Нарушение SRP: у класса сразу три причины для изменения — доменный расчёт, формат вывода и
+     * способ доставки результата. Любая из трёх заставляет править один и тот же класс.
+     *
+     * <p>К чему ведёт: правка формата вывода трогает код с бизнес-логикой, и сломать расчёт можно
+     * случайно, вообще не думая о нём; расчёт невозможно протестировать, не перехватывая
+     * {@code System.out}; когда тот же расчёт понадобится для графика или выгрузки в файл, его
+     * придётся копировать — а дальше исправлять формулу в двух местах и однажды забыть про одно.
+     *
+     * <p>В проекте правильно: CLI-команда разбирает аргументы и печатает результат, а решение
+     * «подходит ли инструмент» вынесено в отдельную абстракцию {@code InstrumentFilter}.
      */
     static final class PositionReport {
 
@@ -43,13 +52,16 @@ public final class SolidViolationExamples {
         }
 
         String render() {
+            // причина для изменения №1 — доменный расчёт: завтра здесь появятся комиссия и налог
             BigDecimal total = price.multiply(BigDecimal.valueOf(quantity));
 
+            // причина для изменения №2 — формат вывода: завтра попросят колонки и выравнивание
             return "=== " + instrument.getTicker() + " ===\n"
                     + "Позиция: " + quantity + " x " + price + " = " + total + " " + instrument.getCurrency();
         }
 
         void print() {
+            // причина для изменения №3 — способ доставки: завтра это файл, JSON или HTTP-ответ
             System.out.println(render());
         }
     }
@@ -59,7 +71,14 @@ public final class SolidViolationExamples {
     // ================================================================================
 
     /**
-     * Нарушение OCP: поведение выбирается цепочкой {@code instanceof} по конкретным типам.
+     * Нарушение OCP: поведение выбирается цепочкой {@code instanceof} по конкретным типам. Чтобы
+     * добавить новый вид инструмента, нужно открыть и отредактировать этот метод — он закрыт для
+     * расширения и открыт для изменения, ровно наоборот тому, что требуется.
+     *
+     * <p>К чему ведёт: таких цепочек в приложении заводится не одна (уровень риска, размер
+     * комиссии, формат строки в выводе) — и при добавлении, скажем, фьючерса нужно найти и
+     * поправить каждую. Пропущенную ветку компилятор не покажет: ошибка вылезет в рантайме уже у
+     * пользователя.
      *
      * <p>В проекте правильно: {@link Instrument#getDescription()} и {@link Instrument#getType()} —
      * каждый подкласс отвечает за себя сам; новый тип добавляется новым классом и регистрацией
@@ -221,33 +240,28 @@ public final class SolidViolationExamples {
         Stock stock = new Stock("SBER", "Сбербанк", Currency.RUB, "Financials", new BigDecimal("6.5"));
         List<Instrument> instruments = List.of(stock);
 
-        //SRP
         System.out.println("SRP и OCP прямо сейчас отрабатывают корректно — в этом и коварство:");
         new PositionReport(stock, new BigDecimal("312.40"), 10).print();
-        //====
-        //OCP
-//        System.out.println("Уровень риска: " + riskLevel(stock));
-//        System.out.println("Стоимость портфеля: " + new PortfolioSummary().totalValue(instruments));
-//        System.out.println();
-        //====
-//      //LSP
-//        System.out.println("LSP: клиент вызывает save у хранилища, объявленного как InstrumentStorage");
-//        try {
-//            importAll(new ReadOnlyStorage(), instruments);
-//        } catch (UnsupportedOperationException e) {
-//            System.out.println("  -> " + e.getClass().getSimpleName() + ": " + e.getMessage());
-//        }
-        //====
-//      //ICP
-//        System.out.println("ISP: клиент вызывает метод интерфейса, который реализация не поддерживает");
-//        try {
-//            new InMemoryMarketDataSource().loadHistory("SBER", 30);
-//        } catch (UnsupportedOperationException e) {
-//            System.out.println("  -> " + e.getClass().getSimpleName() + ": " + e.getMessage());
-//        }
-//
-//        System.out.println();
-//        System.out.println("Упали только LSP и ISP. SRP, OCP и DIP не ломают ничего сегодня —");
-//        System.out.println("они лишь делают каждое следующее изменение дороже. Тем и опасны.");
+        System.out.println("Уровень риска: " + riskLevel(stock));
+        System.out.println("Стоимость портфеля: " + new PortfolioSummary().totalValue(instruments));
+        System.out.println();
+
+        System.out.println("LSP: клиент вызывает save у хранилища, объявленного как InstrumentStorage");
+        try {
+            importAll(new ReadOnlyStorage(), instruments);
+        } catch (UnsupportedOperationException e) {
+            System.out.println("  -> " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+
+        System.out.println("ISP: клиент вызывает метод интерфейса, который реализация не поддерживает");
+        try {
+            new InMemoryMarketDataSource().loadHistory("SBER", 30);
+        } catch (UnsupportedOperationException e) {
+            System.out.println("  -> " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+
+        System.out.println();
+        System.out.println("Упали только LSP и ISP. SRP, OCP и DIP не ломают ничего сегодня —");
+        System.out.println("они лишь делают каждое следующее изменение дороже. Тем и опасны.");
     }
 }

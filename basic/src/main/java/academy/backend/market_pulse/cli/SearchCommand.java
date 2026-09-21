@@ -1,11 +1,11 @@
 package academy.backend.market_pulse.cli;
 
-import java.util.concurrent.Callable;
-
 import academy.backend.market_pulse.model.Instrument;
 import academy.backend.market_pulse.repository.InstrumentRepository;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+
+import java.util.concurrent.Callable;
 
 @Command(name = "search", description = "Поиск инструмента по тикеру")
 public class SearchCommand implements Callable<Integer> {

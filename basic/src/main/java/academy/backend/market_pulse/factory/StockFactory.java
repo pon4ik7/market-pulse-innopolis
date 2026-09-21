@@ -2,17 +2,21 @@ package academy.backend.market_pulse.factory;
 
 import academy.backend.market_pulse.model.Currency;
 import academy.backend.market_pulse.model.Instrument;
+import academy.backend.market_pulse.model.Stock;
+
+import java.math.BigDecimal;
 
 public class StockFactory implements InstrumentFactory {
 
-    static {
-        InstrumentFactories.register("STOCK", new StockFactory());
+    @Override
+    public String type() {
+        return "STOCK";
     }
 
     @Override
     public Instrument create(String ticker, String name, Currency currency) {
-        // TODO: создать Stock(ticker, name, currency, sector, dividendYield) — sector/dividendYield
-        // через CLI пока не собираются, использовать значения по умолчанию.
-        throw new UnsupportedOperationException("create для StockFactory");
+        // sector и dividendYield не собираются через CLI на этом этапе — значения по умолчанию,
+        // уточняются последующим редактированием инструмента в будущих семинарах.
+        return new Stock(ticker, name, currency, "Unspecified", BigDecimal.ZERO);
     }
 }
