@@ -9,6 +9,7 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Iterator;
+import java.util.Optional;
 
 /**
  * Скрывает от клиента, как именно устроена прокси-обёртка над {@link InstrumentRepository},
@@ -74,9 +75,9 @@ public final class ProxyFactory {
         }
 
         @Override
-        public Instrument findByTicker(String ticker) {
+        public Optional<Instrument> findByTicker(String ticker) {
             long start = System.nanoTime();
-            Instrument result = target.findByTicker(ticker);
+            var result = target.findByTicker(ticker);
             System.out.printf("findByTicker() выполнен за %d нс%n", System.nanoTime() - start);
             return result;
         }

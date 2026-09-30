@@ -2,6 +2,8 @@ package academy.backend.market_pulse.repository;
 
 import academy.backend.market_pulse.model.Instrument;
 
+import java.util.Optional;
+
 /**
  * Хранилище инструментов. Выделено в интерфейс (в отличие от базового трека) — нужен для
  * JDK Dynamic Proxy и CGLIB, которым для работы требуется тип, отдельный от конкретной
@@ -11,5 +13,5 @@ public interface InstrumentRepository extends Iterable<Instrument> {
 
     void add(Instrument instrument);
 
-    Instrument findByTicker(String ticker);
+    Optional<Instrument> findByTicker(String ticker);
 }
