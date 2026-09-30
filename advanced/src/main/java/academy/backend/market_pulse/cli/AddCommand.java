@@ -33,14 +33,14 @@ public class AddCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        try {
+//        try {
             Instrument instrument = InstrumentFactories.create(type, ticker, name, currency);
             repository.add(instrument);
             System.out.println("Добавлено: " + instrument.getDescription());
             return 0;
-        } catch (DuplicateTickerException | IllegalArgumentException e) {
-            System.out.println("Не удалось добавить инструмент: " + e.getMessage());
-            return 1;
-        }
+//        } catch (DuplicateTickerException | IllegalArgumentException e) {
+//            System.out.println("Не удалось добавить инструмент: " + e.getMessage());
+//            return 1;
+//        }
     }
 }
