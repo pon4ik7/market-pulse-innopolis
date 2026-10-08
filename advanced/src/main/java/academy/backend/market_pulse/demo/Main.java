@@ -4,6 +4,7 @@ import academy.backend.market_pulse.cli.AddCommand;
 import academy.backend.market_pulse.cli.ListCommand;
 import academy.backend.market_pulse.cli.MarketPulseCli;
 import academy.backend.market_pulse.cli.SearchCommand;
+import academy.backend.market_pulse.cli.WatchCommand;
 import academy.backend.market_pulse.factory.InstrumentFactories;
 import academy.backend.market_pulse.model.Currency;
 import academy.backend.market_pulse.model.Instrument;
@@ -28,7 +29,8 @@ public class Main {
         CommandLine cli = new CommandLine(new MarketPulseCli())
                 .addSubcommand(new SearchCommand(repository))
                 .addSubcommand(new AddCommand(repository))
-                .addSubcommand(new ListCommand(repository));
+                .addSubcommand(new ListCommand(repository))
+                .addSubcommand(new WatchCommand());
         int exitCode = cli.execute(args);
         System.exit(exitCode);
     }

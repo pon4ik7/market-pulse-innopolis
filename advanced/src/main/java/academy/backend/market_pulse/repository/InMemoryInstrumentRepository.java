@@ -9,8 +9,9 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
- * Реализация {@link InstrumentRepository} поверх внутреннего массива фиксированного размера.
- * Заглушка: подключение реального источника данных запланировано на семинар 5.
+ * Задача: реализовать {@link InstrumentRepository} «в памяти» — хранить инструменты,
+ * добавлять новые (с защитой от дубликатов по тикеру), искать по тикеру и перебирать список.
+ * Тикеры трактуются без учёта регистра; при старте подставляются демо-данные для CLI.
  */
 public class InMemoryInstrumentRepository implements InstrumentRepository {
 
