@@ -16,13 +16,29 @@ import java.util.concurrent.Callable;
 @Command(name = "quote", description = "Получить котировки по одному или нескольким тикерам")
 public class QuoteCommand implements Callable<Integer> {
 
-    public QuoteCommand(QuoteService quoteService) {
+    @Parameters(index = "0", arity = "1..*", description = "Тикеры для получения котировок")
+    private List<String> tickers;
 
+    private final QuoteService quoteService;
+
+    public QuoteCommand(QuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 
     @Override
     public Integer call() {
-        //TODO
+        if (tickers == null) {
+            System.out.println("Не указан тикер");
+            return 1;
+        }
+        for (var ticker : tickers) {
+            quoteService.add(ticker);
+        }
+        quoteService.process();
+        for (var ticker : tickers) {
+            var quote = quoteService.get(ticker);
+            quote.ifPresent(System.out::println);
+        }
         return 0;
     }
 }
