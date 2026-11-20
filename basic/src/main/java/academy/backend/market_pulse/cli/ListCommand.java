@@ -1,14 +1,21 @@
 package academy.backend.market_pulse.cli;
 
-import academy.backend.market_pulse.filter.ListUniversalFilter;
-import academy.backend.market_pulse.filter.Operator;
 import academy.backend.market_pulse.model.Currency;
 import academy.backend.market_pulse.model.Instrument;
 import academy.backend.market_pulse.repository.InstrumentRepository;
+import academy.backend.market_pulse.util.InstrumentSortingUtils;
+import academy.backend.market_pulse.util.InstrumentSortingUtils.SortField;
+import academy.backend.market_pulse.util.InstrumentSortingUtils.SortOrder;
+import academy.backend.market_pulse.util.ListFilterBuilder;
+import academy.backend.market_pulse.util.ListFilterBuilder.PriceOperator;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
+import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Option;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
@@ -24,11 +31,18 @@ public class ListCommand implements Callable<Integer> {
     @Option(names = "--currency", description = "Фильтр по валюте инструмента")
     private Currency currency;
 
-    @Option(names = "--price-op", description = "Оператор сравнения цены: GE, LE или EQ")
-    private Operator priceOperator;
+    @Option(names = "--price-op", converter = PriceOperatorConverter.class,
+            description = "Оператор сравнения цены (GE, LE или EQ)")
+    private PriceOperator priceOperator;
 
     @Option(names = "--price", description = "Пороговое значение цены (дивидендная доходность акции)")
     private BigDecimal price;
+
+    @Option(names = "--sort-by", description = "Поле сортировки (TICKER, CURRENCY или PRICE)")
+    private SortField sortBy;
+
+    @Option(names = "--order", defaultValue = "ASC", description = "Порядок сортировки (ASC или DESC)")
+    private SortOrder order;
 
     private final InstrumentRepository repository;
 
@@ -38,25 +52,47 @@ public class ListCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        ListUniversalFilter filter = new ListUniversalFilter();
-        Predicate<Instrument> predicate = instrument -> true;
-        if (type != null) {
-            predicate = predicate.and(filter.byType(type));
+        if ((priceOperator == null && price != null) || (priceOperator != null && price == null)) {
+            System.err.println("Укажи --price-op и --price вместе.");
+            return ExitCode.USAGE;
         }
-        if (ticker != null) {
-            predicate = predicate.and(filter.byTicker(ticker));
-        }
-        if (currency != null) {
-            predicate = predicate.and(filter.byCurrency(currency));
-        }
-        if (priceOperator != null && price != null) {
-            predicate = predicate.and(filter.byPrice(priceOperator, price));
-        }
-        for (var instrument : repository) {
-            if (predicate.test(instrument)) {
-                System.out.println(instrument);
+
+        Predicate<Instrument> filter = new ListFilterBuilder()
+                .byType(type)
+                .byTicker(ticker)
+                .byCurrency(currency)
+                .byPrice(priceOperator, price)
+                .build();
+
+        List<Instrument> matches = new ArrayList<>();
+        for (Instrument instrument : repository) {
+            if (filter.test(instrument)) {
+                matches.add(instrument);
             }
         }
+        if (sortBy != null) {
+            InstrumentSortingUtils.sortWith(matches, InstrumentSortingUtils.comparator(sortBy, order));
+        }
+        for (Instrument instrument : matches) {
+            System.out.println(instrument);
+        }
         return 0;
+    }
+
+    public static class PriceOperatorConverter implements ITypeConverter<PriceOperator> {
+
+        @Override
+        public PriceOperator convert(String value) {
+            switch (value) {
+                case "GREATER_THAN":
+                    return PriceOperator.GE;
+                case "LESS_THAN":
+                    return PriceOperator.LE;
+                case "EQUALS":
+                    return PriceOperator.EQ;
+                default:
+                    return PriceOperator.valueOf(value);
+            }
+        }
     }
 }
