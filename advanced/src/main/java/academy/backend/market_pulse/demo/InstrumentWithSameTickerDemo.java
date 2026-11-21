@@ -11,8 +11,8 @@ import picocli.CommandLine;
 import java.util.Arrays;
 
 /**
- * Иллюстрация проблемы в логике при добавлении инструментов с одинаковым тикером.
- * Инструмент добавлен, но найти его нельзя.
+ * Показывает, как CLI обрабатывает попытку добавить инструмент с занятым тикером.
+ * После отказа в списке остаётся исходный инструмент.
  */
 @SuppressWarnings("JavaPrintToLogpoint")
 public class InstrumentWithSameTickerDemo {
