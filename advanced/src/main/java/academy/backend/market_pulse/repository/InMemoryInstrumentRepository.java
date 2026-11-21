@@ -26,11 +26,13 @@ public class InMemoryInstrumentRepository implements InstrumentRepository {
 
     @Override
     public void add(Instrument instrument) {
-//        if (findByTicker(instrument.getTicker()).isPresent()) {
-//            throw new DuplicateTickerException(instrument.getTicker());
-//        }
-        instruments[size++] = instrument;
+        if (findByTicker(instrument.getTicker()).isPresent()) {
+            throw new DuplicateTickerException(instrument.getTicker());
+        }
+        instruments[size] = instrument;
+        size++;
     }
+
     @Override
     public Optional<Instrument> findByTicker(String ticker) {
         for (Instrument instrument : this) {
